@@ -10,13 +10,13 @@ class TrajectoryEstimator:
 
         #load parameters from file
         self.undistortRectifyMapLx = np.load(
-            './calibration/undistortRectifyMapLx.npy')
+            './calibration_params/undistortRectifyMapLx.npy')
         self.undistortRectifyMapLy = np.load(
-            './calibration/undistortRectifyMapLy.npy')
+            './calibration_params/undistortRectifyMapLy.npy')
         self.undistortRectifyMapRx = np.load(
-            './calibration/undistortRectifyMapRx.npy')
+            './calibration_params/undistortRectifyMapRx.npy')
         self.undistortRectifyMapRy = np.load(
-            './calibration/undistortRectifyMapRy.npy')
+            './calibration_params/undistortRectifyMapRy.npy')
         self.Q = np.load('./calibration/Q.npy')
 
         self.ball_loc_hist = []
@@ -74,6 +74,8 @@ class TrajectoryEstimator:
         if left_x is not None and right_x is not None:
             self._save_3d_point(left_x, left_y, right_x, right_y)
 
-        x_intercept, y_intercept = self._fit_curves()
+            x_intercept, y_intercept = self._fit_curves()
 
-        return (x_intercept, y_intercept)
+            return (x_intercept, y_intercept)
+        else:
+            return None, None
