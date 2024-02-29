@@ -223,8 +223,7 @@ class App(Frame):
             nFrames = len(lfilelist) if len(lfilelist) else len(rfilelist)
             for i in range(0, nFrames):  # there should be the same number of frames in both directories
                 if len(lfilelist) > 0:
-                    lframe = cv.imr                        self.Catcher.MoveToXY(0, 0)   # Center is (0,0) Positive X moves to left, Positive Y moves up.
-ead(lfilelist[i])
+                    lframe = cv.imread(lfilelist[i])
                     if len(rfilelist) == 0:
                         rframe = lframe  # use left frame for right
                 if len(rfilelist) > 0:
