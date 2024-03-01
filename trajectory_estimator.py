@@ -4,9 +4,9 @@ import cv2 as cv
 
 
 class TrajectoryEstimator:
-    def __init__(self):
-        self.left_detector = BaseballDetector()
-        self.right_detector = BaseballDetector()
+    def __init__(self, display):
+        self.left_detector = BaseballDetector(grayscale=False, display=display)
+        self.right_detector = BaseballDetector(grayscale=False, display=False)
 
         #load parameters from file
         self.undistortRectifyMapLx = np.load(
@@ -17,7 +17,7 @@ class TrajectoryEstimator:
             './calibration_params/undistortRectifyMapRx.npy')
         self.undistortRectifyMapRy = np.load(
             './calibration_params/undistortRectifyMapRy.npy')
-        self.Q = np.load('./calibration/Q.npy')
+        self.Q = np.load('./calibration_params/Q.npy')
 
         self.ball_loc_hist = []
 
@@ -35,17 +35,17 @@ class TrajectoryEstimator:
                                     disparity]).reshape(1, 1, 3)
 
         #use Q to get 3D point
-        points3d = cv.perspectiveTransform(baseball_center.astype(np.float32),
+        point = cv.perspectiveTransform(baseball_center.astype(np.float32),
                                            self.Q).squeeze()
 
-        point = self._transform_to_catcher_frame(points3d)
+        # point = self._transform_to_catcher_frame(point)
         self.ball_loc_hist.append(point)
 
     def _transform_to_catcher_frame(self):
         raise NotImplementedError
 
     def _undistort_and_rectify(self, left_img, right_img):
-        left_img_rect = cv.remap(left_img, self.undistorself.tRectifyMapLx,
+        left_img_rect = cv.remap(left_img, self.undistortRectifyMapLx,
                                  self.undistortRectifyMapLy, cv.INTER_LINEAR)
 
         right_img_rect = cv.remap(right_img, self.undistortRectifyMapRx,
@@ -62,14 +62,16 @@ class TrajectoryEstimator:
             best_fit_line = np.polyfit(z_hist, x_hist, 1)
             best_fit_parabola = np.polyfit(z_hist, y_hist, 2)
 
-        return best_fit_line[-1], best_fit_parabola[-1]
+            return best_fit_line[-1], best_fit_parabola[-1]
+        else:
+            return 0,0
 
     def get_intercept(self, left_image, right_image) -> np.ndarray:
         left_img_rect, right_img_rect = self._undistort_and_rectify(
             left_image, right_image)
 
-        left_x, left_y = self.left_detector.detect_ball(left_image)
-        right_x, right_y = self.right_detector.detect_ball(right_image)
+        left_x, left_y = self.left_detector.detect(left_image)
+        right_x, right_y = self.right_detector.detect(right_image)
 
         if left_x is not None and right_x is not None:
             self._save_3d_point(left_x, left_y, right_x, right_y)

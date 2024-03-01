@@ -11,6 +11,7 @@ from datetime import datetime
 import os
 from glob import glob
 from pathlib import Path
+from trajectory_estimator import TrajectoryEstimator
 
 # Use $ ls /dev/tty* to find Keyspan port name
 PORT = '/dev/ttyUSB0'                   # Linux
@@ -20,8 +21,8 @@ PORT = '/dev/ttyUSB0'                   # Linux
 Set WEBCAM to 1 to use your webcam or 0 to use the Flea2 cameras on the lab machine
 Set CATCHER to 1 to use the catcher connected to the lab machine or 0 to use your own computer
 '''
-WEBCAM = 1
-CATCHER = 0
+WEBCAM = 0
+CATCHER = 1
 if WEBCAM:
     camera = cv.VideoCapture(0)
     width = int(camera.get(cv.CAP_PROP_FRAME_WIDTH))
@@ -150,7 +151,7 @@ class App(Frame):
         self.currentY.set(0)
         Button(display3, text="Move Catcher", width=10, height=1, command=self.moveCatcher, font=helv18).grid(column=4, row=0)
         Button(display3, text="Stop Catcher", width=10, height=1, command=self.stopCatcher, font=helv18).grid(column=4, row=1)
-        Button(display3, text="Catch Ball", width=8, height=2, command=self.catchBall, font=helv18).grid(column=5, row=0)
+        Button(display3, text="Catch Ball", width=8, height=2, command=self.catchBall_func, font=helv18).grid(column=5, row=0)
         Button(display3, text="Stop Catch", width=8, height=2, command=self.stopCatch, font=helv18).grid(column=5, row=1)
         Button(display3, text="Quit", width=4, height=2, command=self.quitProgram, font=helv18).grid(column=6, row=0, rowspan=2)
         display3.pack(side='right', ipadx=10)
@@ -159,6 +160,8 @@ class App(Frame):
             if self.Catcher.Device.is_roboteq_connected:
                 self.currentX.set(self.Catcher.GetEncoderCount(X_MOTOR))
                 self.currentY.set(self.Catcher.GetEncoderCount(Y_MOTOR))
+
+            self.trajectory_estimator = TrajectoryEstimator(display=True)
 
         # threading
         self.stopevent = threading.Event()
@@ -277,7 +280,7 @@ class App(Frame):
             self.currentX.set(self.Catcher.GetEncoderCount(X_MOTOR))
             self.currentY.set(self.Catcher.GetEncoderCount(Y_MOTOR))
 
-    def catchBall(self):
+    def catchBall_func(self):
         self.processFlag = True     # Capture image
         self.camMode.set(ON)        # Get camera input
         self.disMode.set(OFF)       # Turn off display to go faster
@@ -321,7 +324,7 @@ class App(Frame):
                         lframe = cv.resize(frame, (int(width / 2), int(height / 2)))
                         rframe = cv.resize(frame, (int(width / 2), int(height / 2)))
                     else:
-                        lframe, rframe = camera.getFrame()
+                        rframe, lframe = camera.getFrame()
                     if self.disMode.get():
                         both = cv.hconcat([lframe, rframe])
                         image = cvMat2tkImg(both)
@@ -336,21 +339,21 @@ class App(Frame):
                             self.acquireFlag = False
                 if self.catchBall:
                     if CATCHER:
-                        # add your code here to detect the ball
+                        
+                        x,y = self.trajectory_estimator.get_intercept(lframe, rframe)
+                        print(x,y)
 
-                        # add your code here to track the ball.
-
-                        # add your code here to estimate the ball landing location after sufficient frames are acquired
-
-                        # add your code to move the catcher to the estimated location
+                        # # add your code to move the catcher to the estimated location
+                        # if x is not None and y is not None:
+                        #     self.Catcher.MoveToXY(x,y)
 
                         # wait for the move to be done
 
 
                         # Set to open loop and speed to 0 in case the catcher hits the safety stop
-                        self.Catcher.MoveAtSpeed(0, 0)
+                        # self.Catcher.MoveAtSpeed(0, 0)
                         # Move the cathcer back to the center or your desired starting location
-                        self.Catcher.MoveToXY(0, 0)   # Center is (0,0) Positive X moves to left, Positive Y moves up.
+                        # self.Catcher.MoveToXY(0, 0)   # Center is (0,0) Positive X moves to left, Positive Y moves up.
             else:
                 time.sleep(1)
 

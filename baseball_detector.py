@@ -120,7 +120,7 @@ class BaseballDetector:
         return cv.absdiff(img, self.background)
 
     def detect(self, img):
-        # self.plot_img = img.copy()
+        self.plot_img = img.copy()
         if not self.incoming_in_gray:
             img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
@@ -136,22 +136,21 @@ class BaseballDetector:
 
         if self.display:
             cv.imshow('raw', self.plot_img)
-            # cv.imshow('diff', diff)
-            # cv.imshow('blur', blur)
-            # cv.imshow('thresh', thresh)
-            # cv.imshow('dilated and eroded', eroded)
+            cv.imshow('blur', blur)
+            cv.imshow('thresh', thresh)
+            cv.imshow('dilated and eroded', eroded)
             if crop_img is not None:
                 cv.imshow('cropped', crop_img)
-            # cv.imshow('time diff', time_diff)
-            # cv.imshow('background', self.background)
+            cv.imshow('time diff', time_diff)
+            cv.imshow('background', self.background)
             # cv.imshow('circle', circle)
-            key = cv.waitKey(0)
+            key = cv.waitKey(1)
 
-            if key == ord('q'):
-                cv.destroyAllWindows()
-                raise SystemExit
-            elif key == ord('s'):
-                cv.imwrite(f'{self.save_counter}.png', self.plot_img)
-                self.save_counter += 1
+            # if key == ord('q'):
+            #     cv.destroyAllWindows()
+            #     raise SystemExit
+            # elif key == ord('s'):
+            #     cv.imwrite(f'{self.save_counter}.png', self.plot_img)
+            #     self.save_counter += 1
 
         return x_loc, y_loc
