@@ -24,11 +24,11 @@ if __name__ == "__main__":
     r_image_paths.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
     assert len(l_image_paths) == len(r_image_paths)
 
-    estimator = TrajectoryEstimator(display=False)
+    estimator = TrajectoryEstimator(display=True)
 
 
     for i in range(35, len(l_image_paths)):
-        print(f"Processing image {i+1}/{len(l_image_paths)}")
+        print(f"\n\nProcessing image {i+1}/{len(l_image_paths)}")
         lframe = cv.imread(f"{path}/L/{l_image_paths[i]}")
         rframe = cv.imread(f"{path}/R/{r_image_paths[i]}")
 

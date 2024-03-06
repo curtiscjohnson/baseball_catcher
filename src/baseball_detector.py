@@ -135,7 +135,7 @@ class BaseballDetector:
         x_loc, y_loc = self._get_hough_circle(crop_img)
 
         if self.display:
-            # cv.imshow('raw', self.plot_img)
+            cv.imshow('raw', self.plot_img)
             # cv.imshow('blur', blur)
             # cv.imshow('thresh', thresh)
             # cv.imshow('dilated and eroded', eroded)

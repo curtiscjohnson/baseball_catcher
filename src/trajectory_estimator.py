@@ -10,6 +10,8 @@ class TrajectoryEstimator:
         self.right_detector = BaseballDetector(grayscale=False, display=display)
         self.display = display
         if self.display:
+            self.previous_xz_estimates = []
+            self.previous_yz_estimates = []
             plt.ion()
 
         #load parameters from file
@@ -97,30 +99,46 @@ class TrajectoryEstimator:
             best_fit_parabola = np.polyfit(z_hist, y_hist, 2)
 
             if self.display:
+                print(f"XY Intercept: {best_fit_line[-1], best_fit_parabola[-1]}")
                 # plot model estimate until z = 0
                 z_hist_plot = np.linspace(z_hist[0], 0, 50)
+                self.previous_xz_estimates.append(best_fit_line[-1])
+                self.previous_yz_estimates.append(best_fit_parabola[-1])
 
                 plt.figure("XZ Model of Ball Trajectory")
                 plt.clf()
                 plt.plot(z_hist, x_hist, 'x')
                 plt.plot(z_hist_plot, np.polyval(best_fit_line, z_hist_plot), 'r-')
+                plt.plot([0]*len(self.previous_xz_estimates), self.previous_xz_estimates, 'go')
                 plt.xlim([425, -20])
                 plt.ylim([50, -50])
                 plt.grid()
                 plt.title("XZ Model of Ball Trajectory")
                 plt.xlabel("z")
                 plt.ylabel("x")
+                plt.legend(["Data", "Model", "Intercept"])
 
                 plt.figure("YZ Model of Ball Trajectory")
                 plt.clf()
                 plt.plot(z_hist, y_hist, 'x')
                 plt.plot(z_hist_plot, np.polyval(best_fit_parabola, z_hist_plot), 'r-')
+                plt.plot([0]*len(self.previous_yz_estimates), self.previous_yz_estimates, 'go')
                 plt.xlim([425, -20])
                 plt.ylim([100, -100])
                 plt.grid()
                 plt.title("YZ Model of Ball Trajectory")
                 plt.xlabel("z")
                 plt.ylabel("y")
+                plt.legend(["Data", "Model", "Intercept"])
+
+                plt.figure("XY Model of Ball Trajectory")
+                plt.clf()
+                plt.scatter(self.previous_xz_estimates, self.previous_yz_estimates, c=list(range(len(self.previous_yz_estimates))), cmap='viridis')
+                plt.colorbar(label='time frame')
+                plt.grid()
+                plt.xlim([0, 30])
+                plt.ylim([0, 70])
+                plt.title("XY Model of Ball Trajectory")
 
                 plt.show(block=False)
 
