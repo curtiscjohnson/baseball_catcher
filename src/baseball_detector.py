@@ -105,8 +105,8 @@ class BaseballDetector:
                     x = self.x_bound + circ_x
                     y = self.y_bound + circ_y
                     #onyl plot circles that are within the bounding box
-                    # cv.circle(self.plot_img, (x, y), circ_r, (0, 255, 0), 1)
                     if self.display:
+                        cv.circle(self.plot_img, (x, y), circ_r, (0, 255, 0), 1)
                         cv.rectangle(self.plot_img, (x - 2, y - 2),
                                      (x + 2, y + 2), (0, 0, 255), -1)
                 return (x, y)
@@ -119,7 +119,7 @@ class BaseballDetector:
     def _remove_background(self, img):
         return cv.absdiff(img, self.background)
 
-    def detect(self, img):
+    def detect(self, img, display=False):
         self.plot_img = img.copy()
         if not self.incoming_in_gray:
             img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -135,14 +135,14 @@ class BaseballDetector:
         x_loc, y_loc = self._get_hough_circle(crop_img)
 
         if self.display:
-            cv.imshow('raw', self.plot_img)
-            cv.imshow('blur', blur)
-            cv.imshow('thresh', thresh)
-            cv.imshow('dilated and eroded', eroded)
+            # cv.imshow('raw', self.plot_img)
+            # cv.imshow('blur', blur)
+            # cv.imshow('thresh', thresh)
+            # cv.imshow('dilated and eroded', eroded)
             if crop_img is not None:
                 cv.imshow('cropped', crop_img)
             cv.imshow('time diff', time_diff)
-            cv.imshow('background', self.background)
+            # cv.imshow('background', self.background)
             # cv.imshow('circle', circle)
             key = cv.waitKey(1)
 
