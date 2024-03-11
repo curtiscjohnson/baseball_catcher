@@ -64,13 +64,14 @@ class TrajectoryEstimator:
         self.ball_loc_hist.append(point)
 
     def _transform_to_catcher_frame(self, point_3d):
-        x = point_3d[0]
-        y = point_3d[1]
-        z = point_3d[2]
-        point_3d = np.array([x, -y, -z])
-        offset = np.array([-13, 28, -26])
+        x, y, z = point_3d
+        delta_x = 13
+        delta_y = 23 #TODO: tune me and delta_z
+        delta_z = 20
 
-        return point_3d + offset
+        return np.array([x-delta_x, 
+                         delta_y-y, 
+                         delta_z-z])
         
     
     def _mask_frames(self, lframe, rframe):
@@ -95,17 +96,18 @@ class TrajectoryEstimator:
                                   self.undistortRectifyMapRy, cv.INTER_LINEAR)
         return left_img_rect, right_img_rect
 
-    def _fit_curves(self):
+    def _fit_curves(self, num_detections):
         #? this might be slow. Fix later with slicing?
         x_hist = [loc[0] for loc in self.ball_loc_hist]
         y_hist = [loc[1] for loc in self.ball_loc_hist]
         z_hist = [loc[2] for loc in self.ball_loc_hist]
 
-        if len(self.ball_loc_hist) > 5:
+        if len(self.ball_loc_hist) > num_detections:
             best_fit_line = np.polyfit(z_hist, x_hist, 1)
             best_fit_parabola = np.polyfit(z_hist, y_hist, 2)
 
             if self.display:
+                print(f"Number of detections: {len(self.ball_loc_hist)}")
                 print(f"XY Intercept: {best_fit_line[-1], best_fit_parabola[-1]}")
                 # plot model estimate until z = 0
                 z_hist_plot = np.linspace(z_hist[0], 0, 50)
@@ -117,8 +119,8 @@ class TrajectoryEstimator:
                 plt.plot(z_hist, x_hist, 'x')
                 plt.plot(z_hist_plot, np.polyval(best_fit_line, z_hist_plot), 'r-')
                 plt.plot([0]*len(self.previous_xz_estimates), self.previous_xz_estimates, 'go')
-                plt.xlim([425, -20])
-                plt.ylim([50, -50])
+                plt.xlim([-500, 20])
+                # plt.ylim([50, -50])
                 plt.grid()
                 plt.title("XZ Model of Ball Trajectory")
                 plt.xlabel("z")
@@ -130,8 +132,8 @@ class TrajectoryEstimator:
                 plt.plot(z_hist, y_hist, 'x')
                 plt.plot(z_hist_plot, np.polyval(best_fit_parabola, z_hist_plot), 'r-')
                 plt.plot([0]*len(self.previous_yz_estimates), self.previous_yz_estimates, 'go')
-                plt.xlim([425, -20])
-                plt.ylim([100, -100])
+                plt.xlim([-500, 20])
+                # plt.ylim([100, -100])
                 plt.grid()
                 plt.title("YZ Model of Ball Trajectory")
                 plt.xlabel("z")
@@ -143,8 +145,8 @@ class TrajectoryEstimator:
                 plt.scatter(self.previous_xz_estimates, self.previous_yz_estimates, c=list(range(len(self.previous_yz_estimates))), cmap='viridis')
                 plt.colorbar(label='time frame')
                 plt.grid()
-                plt.xlim([0, 30])
-                plt.ylim([0, 70])
+                # plt.xlim([0, 30])
+                # plt.ylim([0, 70])
                 plt.title("XY Model of Ball Trajectory")
 
                 plt.show(block=False)
@@ -167,8 +169,8 @@ class TrajectoryEstimator:
         else:
             return None
 
-    def get_intercept(self) -> tuple:
-        x_intercept, y_intercept = self._fit_curves()
+    def get_intercept(self, num_detections=15) -> tuple:
+        x_intercept, y_intercept = self._fit_curves(num_detections)
         return (x_intercept, y_intercept)
     
     def get_ball_3D_location_profile(self, lframe, rframe, mask=False) -> np.ndarray:

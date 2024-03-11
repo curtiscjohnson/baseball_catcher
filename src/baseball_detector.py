@@ -30,7 +30,7 @@ class BaseballDetector:
         # img comes in with background removed
 
         #  gaussian blur diff image
-        blur = cv.medianBlur(img, 5)
+        blur = cv.medianBlur(img, 9)
 
         #use time history to only look in region of interest so that thresholds can be low.
         time_diff = cv.absdiff(blur, self.prev_image)
@@ -76,11 +76,16 @@ class BaseballDetector:
             #crop everything inside of bounding box
             crop_img = blur[self.y_bound:self.y_bound + self.h_bound,
                             self.x_bound:self.x_bound + self.w_bound]
+            #threshold on cropped image
+            ret, crop_img = cv.threshold(crop_img, 7, 255, cv.THRESH_BINARY)
+
+            # # erosion to remove noise and fill in gaps
+            kernel = np.ones((3, 3), np.uint8)
+            crop_img = cv.dilate(crop_img, kernel, iterations=2)
+            crop_img= cv.erode(crop_img, kernel, iterations=2)
         else:
             crop_img = None
 
-        #threshold on cropped image
-        ret, crop_img = cv.threshold(crop_img, 7, 255, cv.THRESH_BINARY)
 
         self.prev_image = blur
 
@@ -97,7 +102,7 @@ class BaseballDetector:
                                       param1=250,
                                       param2=1,
                                       minRadius=5,
-                                      maxRadius=25)
+                                      maxRadius=30)
             #
             if circles is not None:
                 circles = np.round(circles[0, :]).astype("int")
@@ -146,9 +151,9 @@ class BaseballDetector:
             # cv.imshow('circle', circle)
             key = cv.waitKey(1)
 
-            # if key == ord('q'):
-            #     cv.destroyAllWindows()
-            #     raise SystemExit
+            if key == ord('q'):
+                cv.destroyAllWindows()
+                raise SystemExit
             # elif key == ord('s'):
             #     cv.imwrite(f'{self.save_counter}.png', self.plot_img)
             #     self.save_counter += 1
