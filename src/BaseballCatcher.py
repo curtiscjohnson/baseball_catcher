@@ -340,8 +340,13 @@ class App(Frame):
                 if self.catchBall:
                     if CATCHER:
                         
-                        x,y = self.trajectory_estimator.get_intercept(lframe, rframe)
-                        print(x,y)
+                        # x,y = self.trajectory_estimator.get_intercept(lframe, rframe)
+                        point3d = self.trajectory_estimator.get_ball_3D_location(lframe, rframe, mask=True)
+
+                        # get intercept estimate from trajectory estimator
+                        if point3d is not None:
+                            x, y = self.trajectory_estimator.get_intercept()
+                            print(x,y)
 
                         # # add your code to move the catcher to the estimated location
                         # if x is not None and y is not None:

@@ -7,7 +7,7 @@ import time
 class TrajectoryEstimator:
     def __init__(self, display):
         self.left_detector = BaseballDetector(grayscale=False, display=display)
-        self.right_detector = BaseballDetector(grayscale=False, display=display)
+        self.right_detector = BaseballDetector(grayscale=False, display=False)
         self.display = display
         if self.display:
             self.previous_xz_estimates = []
@@ -57,14 +57,21 @@ class TrajectoryEstimator:
         point = cv.perspectiveTransform(baseball_center.astype(np.float32),
                                            self.Q).squeeze()
 
-        # point = self._transform_to_catcher_frame(point)
+        print(f"Camera frame: {point}")
+        point = self._transform_to_catcher_frame(point)
+        print(f"Catcher frame: {point}")
 
-        if self.display:
-            print(f"3D point in catcher frame: {point}")
         self.ball_loc_hist.append(point)
 
-    def _transform_to_catcher_frame(self):
-        raise NotImplementedError
+    def _transform_to_catcher_frame(self, point_3d):
+        x = point_3d[0]
+        y = point_3d[1]
+        z = point_3d[2]
+        point_3d = np.array([x, -y, -z])
+        offset = np.array([-13, 28, -26])
+
+        return point_3d + offset
+        
     
     def _mask_frames(self, lframe, rframe):
         lmask = np.zeros(lframe.shape[:2], dtype="uint8")

@@ -3,6 +3,7 @@ import cv2 as cv
 import os
 import time
 
+from Flea2Camera2 import FleaCam
 from trajectory_estimator import TrajectoryEstimator
 
 
@@ -13,37 +14,44 @@ if __name__ == "__main__":
     # dataset = "20240215113115" # stays in image great
     # dataset = "20240215113139" # stays in image great
     # dataset = "20240215113202"
-    dataset = "20240215113225"
+    # dataset = "20240215113225"
 
-    path = f"data/{dataset}/"
-    l_image_paths = os.listdir(path+"L")
-    r_image_paths = os.listdir(path+"R")
+    # path = f"data/{dataset}/"
+    # l_image_paths = os.listdir(path+"L")
+    # r_image_paths = os.listdir(path+"R")
 
-    # Sort the image paths so they are in ascending order (sorted() puts 10 in front of 2)
-    l_image_paths.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
-    r_image_paths.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
-    assert len(l_image_paths) == len(r_image_paths)
+    camera = FleaCam()
+    height, width, channel = camera.frame_shape
 
-    estimator = TrajectoryEstimator(display=True)
+    # # Sort the image paths so they are in ascending order (sorted() puts 10 in front of 2)
+    # l_image_paths.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+    # r_image_paths.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+    # assert len(l_image_paths) == len(r_image_paths)
+
+    estimator = TrajectoryEstimator(display=False)
 
 
-    for i in range(35, len(l_image_paths)):
-        print(f"\n\nProcessing image {i+1}/{len(l_image_paths)}")
-        lframe = cv.imread(f"{path}/L/{l_image_paths[i]}")
-        rframe = cv.imread(f"{path}/R/{r_image_paths[i]}")
+    # for i in range(35, len(l_image_paths)):
+    while True:
+        
+        # print(f"\n\nProcessing image {i+1}/{len(l_image_paths)}")
+        # lframe = cv.imread(f"{path}/L/{l_image_paths[i]}")
+        # rframe = cv.imread(f"{path}/R/{r_image_paths[i]}")
+        rframe, lframe = camera.getFrame()
 
         start = time.time()
         # get current 3D point of the ball
-        point_3D = estimator.get_ball_3D_location_profile(lframe, rframe, mask=True)
+        point_3D = estimator.get_ball_3D_location(lframe, rframe, mask=True)
 
-        # get intercept estimate from trajectory estimator
+        # # get intercept estimate from trajectory estimator
         if point_3D is not None:
-            x, y = estimator.get_intercept_profile()
+            x, y = estimator.get_intercept()
+            print(f"Intercept: {x},{y}\n\n")
 
-        print(f"Loop Time w/o reading image: {(time.time() - start)*1000} ms")
+        # print(f"Loop Time w/o reading image: {(time.time() - start)*1000} ms")
         cv.imshow("left", lframe)
         cv.imshow("right", rframe)
-        cv.waitKey(0)
+        cv.waitKey(1)
 
     # camera = FleaCam() #this is both cameras
 

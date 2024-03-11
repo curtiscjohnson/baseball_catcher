@@ -136,9 +136,9 @@ class BaseballDetector:
 
         if self.display:
             cv.imshow('raw', self.plot_img)
-            # cv.imshow('blur', blur)
-            # cv.imshow('thresh', thresh)
-            # cv.imshow('dilated and eroded', eroded)
+            cv.imshow('blur', blur)
+            cv.imshow('thresh', thresh)
+            cv.imshow('dilated and eroded', eroded)
             if crop_img is not None:
                 cv.imshow('cropped', crop_img)
             cv.imshow('time diff', time_diff)
