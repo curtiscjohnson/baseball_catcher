@@ -41,15 +41,15 @@ class BaseballDetector:
 
         # img comes in with background removed
 
-        # if profile:
-        #     start_blur = time.time()
-        # # Gaussian blur diff image
-        # blur = cv.medianBlur(img, 9)
-        # if profile:
-        #     end_blur = time.time()
-        #     print("Gaussian Blur Time:", (end_blur - start_blur) * 1000, "milliseconds")
+        if profile:
+            start_blur = time.time()
+        # Gaussian blur diff image
+        blur = cv.medianBlur(img, 9)
+        if profile:
+            end_blur = time.time()
+            print("Gaussian Blur Time:", (end_blur - start_blur) * 1000, "milliseconds")
 
-        blur = img
+        # blur = img
         # use time history to only look in region of interest so that thresholds can be low.
         time_diff = cv.absdiff(blur, self.prev_image)
 

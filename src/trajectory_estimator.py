@@ -5,10 +5,16 @@ import matplotlib.pyplot as plt
 import time
 
 class TrajectoryEstimator:
-    def __init__(self, display):
-        self.crop_points_xleft = np.array([290, 440])
-        self.crop_points_xright = np.array([205, 350])
-        self.crop_points_y = np.array([0, 145])
+    def __init__(self, crop, display):
+        self.cropped = crop
+        if self.cropped:
+            self.crop_points_xleft = np.array([290, 440])
+            self.crop_points_xright = np.array([205, 350])
+            self.crop_points_y = np.array([0, 145])
+        else:
+            self.crop_points_xleft = np.array([0, 640])
+            self.crop_points_xright = np.array([0, 640])
+            self.crop_points_y = np.array([0, 480])
 
         self.left_detector = BaseballDetector(image_height=self.crop_points_y[1] - self.crop_points_y[0],
                                               image_width=self.crop_points_xleft[1] - self.crop_points_xleft[0],
@@ -16,6 +22,7 @@ class TrajectoryEstimator:
         self.right_detector = BaseballDetector(image_height=self.crop_points_y[1] - self.crop_points_y[0],
                                               image_width=self.crop_points_xright[1] - self.crop_points_xright[0],
                                               grayscale=False, display=False)
+
         self.display = display
         self.previous_xz_estimates = []
         self.previous_yz_estimates = []
@@ -32,6 +39,16 @@ class TrajectoryEstimator:
         self.undistortRectifyMapRy = np.load(
             './calibration_params/undistortRectifyMapRy.npy')
         self.Q = np.load('./calibration_params/Q.npy')
+            
+        # self.undistortRectifyMapLx = np.load(
+        #     '/home/daniel/Downloads/map_Lx.npy')
+        # self.undistortRectifyMapLy = np.load(
+        #     '/home/daniel/Downloads/map_Ly.npy')
+        # self.undistortRectifyMapRx = np.load(
+        #     '/home/daniel/Downloads/map_Rx.npy')
+        # self.undistortRectifyMapRy = np.load(
+        #     '/home/daniel/Downloads/map_Ry.npy')
+        # self.Q = np.load('/home/daniel/Downloads/Q.npy')
 
         # self.mask_points_left = np.array( [[
         #     [335,0], # top left
@@ -56,6 +73,12 @@ class TrajectoryEstimator:
         ! They are not always on the same horizonal line however.
         """
 
+        if self.cropped:
+            left_x += self.crop_points_xleft[0]
+            left_y += self.crop_points_y[0]
+            right_x += self.crop_points_xright[0]
+            right_y += self.crop_points_y[0]
+
         #calculate estimated disparity for the baseball center
         disparity = left_x - right_x
 
@@ -75,12 +98,14 @@ class TrajectoryEstimator:
     def _transform_to_catcher_frame(self, point_3d):
         x, y, z = point_3d
         delta_x = 13
-        delta_y = 20 #TODO: tune me and delta_z
+        delta_y = 26 #TODO: tune me and delta_z
         delta_z = 20
+        z_offset = 0 #-30
+        #432
 
-        return np.array([x-delta_x, 
-                         y + delta_y, 
-                         delta_z-z])
+        return np.array([x - delta_x, 
+                         delta_y - y, 
+                         delta_z - z - z_offset])
         
     
     def _mask_frames(self, lframe, rframe):
@@ -170,14 +195,14 @@ class TrajectoryEstimator:
         else:
             return 0,0
 
-    def get_ball_3D_location(self, lframe, rframe, mask=False) -> np.ndarray:
+    def get_ball_3D_location(self, lframe, rframe) -> np.ndarray:
         left_img_rect, right_img_rect = self._undistort_and_rectify(lframe, rframe)
 
-        if mask:
-            lframe_masked, rframe_masked = self._mask_frames(left_img_rect, right_img_rect)
+        if self.cropped:
+            lframe, rframe = self._mask_frames(left_img_rect, right_img_rect)
 
-        left_x, left_y = self.left_detector.detect(lframe_masked)
-        right_x, right_y = self.right_detector.detect(rframe_masked)
+        left_x, left_y = self.left_detector.detect(lframe)
+        right_x, right_y = self.right_detector.detect(rframe)
 
         if left_x is not None and right_x is not None:
             self._save_3d_point(left_x, left_y, right_x, right_y)
