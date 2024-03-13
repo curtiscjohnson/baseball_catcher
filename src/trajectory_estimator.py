@@ -26,45 +26,22 @@ class TrajectoryEstimator:
         self.display = display
         self.previous_xz_estimates = []
         self.previous_yz_estimates = []
+        self.ball_loc_hist = []
+
         if self.display:
             plt.ion()
 
         #load parameters from file
+        calibration_path = "./calibration/calibration_params2"
         self.undistortRectifyMapLx = np.load(
-            './calibration_params/undistortRectifyMapLx.npy')
+            f'{calibration_path}/undistortRectifyMapLx.npy')
         self.undistortRectifyMapLy = np.load(
-            './calibration_params/undistortRectifyMapLy.npy')
+            f'{calibration_path}/undistortRectifyMapLy.npy')
         self.undistortRectifyMapRx = np.load(
-            './calibration_params/undistortRectifyMapRx.npy')
+            f'{calibration_path}/undistortRectifyMapRx.npy')
         self.undistortRectifyMapRy = np.load(
-            './calibration_params/undistortRectifyMapRy.npy')
-        self.Q = np.load('./calibration_params/Q.npy')
-            
-        # self.undistortRectifyMapLx = np.load(
-        #     '/home/daniel/Downloads/map_Lx.npy')
-        # self.undistortRectifyMapLy = np.load(
-        #     '/home/daniel/Downloads/map_Ly.npy')
-        # self.undistortRectifyMapRx = np.load(
-        #     '/home/daniel/Downloads/map_Rx.npy')
-        # self.undistortRectifyMapRy = np.load(
-        #     '/home/daniel/Downloads/map_Ry.npy')
-        # self.Q = np.load('/home/daniel/Downloads/Q.npy')
-
-        # self.mask_points_left = np.array( [[
-        #     [335,0], # top left
-        #     [525,0], # top right, more aggresive was 500
-        #     [675,480], # bottom right, more aggresive was 640
-        #     [335,480], # bottom left
-        # ]], dtype=np.int32)
-        # self.mask_points_right = np.array( [[
-        #     [100,0], # top left
-        #     [300,0], # top right
-        #     [300,480], # bottom right
-        #     [50,480], # bottom left
-        # ]], dtype=np.int32)
-
-
-        self.ball_loc_hist = []
+            f'{calibration_path}/undistortRectifyMapRy.npy')
+        self.Q = np.load(f'{calibration_path}/Q.npy')
 
     def _save_3d_point(self, left_x, left_y, right_x, right_y) -> None:
         """ 
@@ -107,16 +84,7 @@ class TrajectoryEstimator:
                          delta_y - y, 
                          delta_z - z - z_offset])
         
-    
     def _mask_frames(self, lframe, rframe):
-        # lmask = np.zeros(lframe.shape[:2], dtype="uint8")
-        # cv.fillPoly(lmask, self.mask_points_left, 255)
-        # lframe_masked = cv.bitwise_and(lframe, lframe, mask=lmask)
-
-        # rmask = np.zeros(rframe.shape[:2], dtype="uint8")
-        # cv.fillPoly(rmask, self.mask_points_right, 255)
-        # rframe_masked = cv.bitwise_and(rframe, rframe, mask=rmask)
-
         lframe_masked = lframe[self.crop_points_y[0]: self.crop_points_y[1], self.crop_points_xleft[0]:self.crop_points_xleft[1]]
         rframe_masked = rframe[self.crop_points_y[0]: self.crop_points_y[1], self.crop_points_xright[0]:self.crop_points_xright[1]]
 

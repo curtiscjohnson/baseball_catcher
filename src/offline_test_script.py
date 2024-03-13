@@ -17,8 +17,8 @@ if __name__ == "__main__":
 
 
     # dataset = "data/coordinates/20240312124553/"
-    dataset = "data/coordinates/20240312124645/"
-    # dataset = "data/coordinates/20240312124757/"
+    # dataset = "data/coordinates/20240312124645/"
+    dataset = "data/coordinates/20240312124757/"
 
 
     l_image_paths = os.listdir(dataset+"L")
@@ -31,10 +31,9 @@ if __name__ == "__main__":
     assert len(l_image_paths) == len(r_image_paths)
 
 
-    estimator = TrajectoryEstimator(crop=True, display=True)
+    estimator = TrajectoryEstimator(crop=False, display=True)
 
-
-    for i in range(47, 86):
+    for i in range(50, 86):
 
         #WE HAVE 16 ms to finish the rest of this loop
 
