@@ -32,7 +32,7 @@ class TrajectoryEstimator:
             plt.ion()
 
         #load parameters from file
-        calibration_path = "./calibration/calibration_params2"
+        calibration_path = "./calibration/calibration_params"
         self.undistortRectifyMapLx = np.load(
             f'{calibration_path}/undistortRectifyMapLx.npy')
         self.undistortRectifyMapLy = np.load(
@@ -43,18 +43,35 @@ class TrajectoryEstimator:
             f'{calibration_path}/undistortRectifyMapRy.npy')
         self.Q = np.load(f'{calibration_path}/Q.npy')
 
+        self.P1 = np.load(f'{calibration_path}/P1.npy')
+        self.P2 = np.load(f'{calibration_path}/P2.npy')
+
+        print(f"P1: {self.P1}")
+        print(f"P2: {self.P2}")
+
+
+
     def _save_3d_point(self, left_x, left_y, right_x, right_y) -> None:
         """ 
         ! To get disparity map, I am individually detecting the ball in 
         ! each image, then using diff in x to get disparity. 
         ! They are not always on the same horizonal line however.
         """
-
         if self.cropped:
             left_x += self.crop_points_xleft[0]
             left_y += self.crop_points_y[0]
             right_x += self.crop_points_xright[0]
             right_y += self.crop_points_y[0]
+
+        # point = self.get_3d_point(left_x, left_y, right_x, right_y)
+        point = self.triangulate_point(left_x, left_y, right_x, right_y)
+        print(f"Camera frame: {point}")
+        point = self._transform_to_catcher_frame(point)
+        print(f"Catcher frame: {point}")
+
+        self.ball_loc_hist.append(point)
+
+    def get_3d_point(self, left_x, left_y, right_x, right_y):
 
         #calculate estimated disparity for the baseball center
         disparity = left_x - right_x
@@ -66,11 +83,22 @@ class TrajectoryEstimator:
         point = cv.perspectiveTransform(baseball_center.astype(np.float32),
                                            self.Q).squeeze()
 
-        print(f"Camera frame: {point}")
-        point = self._transform_to_catcher_frame(point)
-        print(f"Catcher frame: {point}")
+        return point
 
-        self.ball_loc_hist.append(point)
+    def triangulate_point(self, left_x, left_y, right_x, right_y):
+        left_pts = np.array([left_x, left_y]).reshape(-1,1).astype(np.float32)
+        right_pts = np.array([right_x, right_y]).reshape(-1,1).astype(np.float32)
+
+
+        # print(f"P1:\n{self.P1}")
+        # print(f"P2:\n{self.P2}")
+        print(f"Left:\n{left_pts}")
+        print(f"Right:\n{right_pts}")
+
+        point_4d = cv.triangulatePoints(self.P1, self.P2, left_pts, right_pts)
+        point3d = point_4d[:3]/point_4d[-1]
+        print(point3d)
+        return point3d.squeeze()        
 
     def _transform_to_catcher_frame(self, point_3d):
         x, y, z = point_3d
@@ -101,18 +129,19 @@ class TrajectoryEstimator:
                                   self.undistortRectifyMapRy, cv.INTER_LINEAR)
         return left_img_rect, right_img_rect
 
-    def _fit_curves(self, num_detections):
+    def _fit_curves(self, num_detections_to_wait):
         #? this might be slow. Fix later with slicing?
         x_hist = [loc[0] for loc in self.ball_loc_hist]
         y_hist = [loc[1] for loc in self.ball_loc_hist]
         z_hist = [loc[2] for loc in self.ball_loc_hist]
         print(f"Total ball detections: {len(self.ball_loc_hist)}")
-        if len(self.ball_loc_hist) > 25:
+        if len(self.ball_loc_hist) > 50:
+            print("stopped updating")
             return self.previous_xz_estimates[-1], self.previous_yz_estimates[-1]
 
-        if len(self.ball_loc_hist) > num_detections:
-            best_fit_line = np.polyfit(z_hist, x_hist, 1)
-            best_fit_parabola = np.polyfit(z_hist, y_hist, 2)
+        if len(self.ball_loc_hist) > num_detections_to_wait:
+            best_fit_line = np.polyfit(z_hist[6:], x_hist[6:], 1)
+            best_fit_parabola = np.polyfit(z_hist[6:], y_hist[6:], 2)
 
             self.previous_xz_estimates.append(best_fit_line[-1])
             self.previous_yz_estimates.append(best_fit_parabola[-1])
@@ -151,7 +180,7 @@ class TrajectoryEstimator:
                 plt.figure("XY Model of Ball Trajectory")
                 plt.clf()
                 plt.scatter(self.previous_xz_estimates, self.previous_yz_estimates, c=list(range(len(self.previous_yz_estimates))), cmap='viridis')
-                plt.colorbar(label='time frame')
+                plt.colorbar(label='time frame (from num_detections_to_wait)')
                 plt.grid()
                 # plt.xlim([0, 30])
                 # plt.ylim([0, 70])
@@ -178,8 +207,8 @@ class TrajectoryEstimator:
         else:
             return None
 
-    def get_intercept(self, num_detections=15) -> tuple:
-        x_intercept, y_intercept = self._fit_curves(num_detections)
+    def get_intercept(self, num_detections_to_wait=15) -> tuple:
+        x_intercept, y_intercept = self._fit_curves(num_detections_to_wait)
         return (x_intercept, y_intercept)
     
     def get_ball_3D_location_profile(self, lframe, rframe, mask=False) -> np.ndarray:

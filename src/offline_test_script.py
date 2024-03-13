@@ -16,9 +16,9 @@ if __name__ == "__main__":
     # dataset = "20240215113225"
 
 
-    # dataset = "data/coordinates/20240312124553/"
-    # dataset = "data/coordinates/20240312124645/"
-    dataset = "data/coordinates/20240312124757/"
+    # dataset = "data/coordinates/20240312124553/" #0,6
+    # dataset = "data/coordinates/20240312124645/" #0,6
+    dataset = "./data/coordinates/20240312124757/" #4,7
 
 
     l_image_paths = os.listdir(dataset+"L")
@@ -31,9 +31,9 @@ if __name__ == "__main__":
     assert len(l_image_paths) == len(r_image_paths)
 
 
-    estimator = TrajectoryEstimator(crop=False, display=True)
+    estimator = TrajectoryEstimator(crop=True, display=True)
 
-    for i in range(50, 86):
+    for i in range(45, 100):
 
         #WE HAVE 16 ms to finish the rest of this loop
 
@@ -48,7 +48,6 @@ if __name__ == "__main__":
         if point_3D is not None:
             x, y = estimator.get_intercept()
             print(f"Intercept: {x},{y}\n\n")
-
         print(f"############Total Loop Time: {(time.time() - start)*1000} ms")
         # print(f"Loop Time w/o reading image: {(time.time() - start)*1000} ms")
         cv.imshow("left", lframe)

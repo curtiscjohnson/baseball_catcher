@@ -76,9 +76,13 @@ def calibrate_stereo_camera(left_intrinsic_matrix, left_distortion_matrix,
 
 if __name__ == "__main__":
     save_path = "calibration/calibration_params"
-    data_folder_left = "data/calibration_imgs/LeftOnly/L"
-    data_folder_right = "data/calibration_imgs/RightOnly/R"
-    stereo_path = "data/calibration_imgs/Stereo"
+    # data_folder_left = "data/calibration_imgs/LeftOnly/L"
+    data_folder_left = "../data/20240207144215/L/"
+    data_folder_right = '../data/20240207144739/R/'
+    # data_folder_right = "data/calibration_imgs/RightOnly/R"
+
+    stereo_path = "../data/20240207145416/"
+    # stereo_path = "data/calibration_imgs/Stereo"
 
     left_intrinsic_matrix, left_disortion_matrix = calibrate_single_camera(data_folder_left)
     right_intrinsic_matrix, right_distortion_matrix = calibrate_single_camera(data_folder_right)
@@ -98,6 +102,14 @@ if __name__ == "__main__":
     np.save(f"{save_path}/undistortRectifyMapLy.npy", undistortRectifyMapLy)
     np.save(f"{save_path}/undistortRectifyMapRx.npy", undistortRectifyMapRx)
     np.save(f"{save_path}/undistortRectifyMapRy.npy", undistortRectifyMapRy)
+
+    print(P1)
+    print(P2)
+    np.save(f"{save_path}/R1.npy", R1)
+    np.save(f"{save_path}/R2.npy", R2)
+    np.save(f"{save_path}/P1.npy", P1)
+    np.save(f"{save_path}/P2.npy", P2)
+    
 
     # save R, T, E, and F to a yaml
     fs = cv.FileStorage(f"{save_path}/calibration_params.yml", cv.FILE_STORAGE_WRITE)

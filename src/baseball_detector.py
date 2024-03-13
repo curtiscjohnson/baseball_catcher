@@ -41,78 +41,79 @@ class BaseballDetector:
 
         # img comes in with background removed
 
-        if profile:
-            start_blur = time.time()
-        # Gaussian blur diff image
-        blur = cv.medianBlur(img, 9)
-        if profile:
-            end_blur = time.time()
-            print("Gaussian Blur Time:", (end_blur - start_blur) * 1000, "milliseconds")
+        # if profile:
+        #     start_blur = time.time()
+        # # Gaussian blur diff image
+        # blur = cv.medianBlur(img, 9)
+        # if profile:
+        #     end_blur = time.time()
+        #     print("Gaussian Blur Time:", (end_blur - start_blur) * 1000, "milliseconds")
 
         # blur = img
-        # use time history to only look in region of interest so that thresholds can be low.
-        time_diff = cv.absdiff(blur, self.prev_image)
+        # # use time history to only look in region of interest so that thresholds can be low.
+        # time_diff = cv.absdiff(blur, self.prev_image)
 
-        # threshold blur on about grayscale of 5ish
-        ret, thresh = cv.threshold(time_diff, 15, 255, cv.THRESH_BINARY)
+        # # threshold blur on about grayscale of 5ish
+        # ret, thresh = cv.threshold(time_diff, 15, 255, cv.THRESH_BINARY)
 
-        # erosion to remove noise and fill in gaps
-        kernel = np.ones((15, 15), np.uint8)
-        dilated = cv.dilate(thresh, kernel, iterations=3)
-        eroded = cv.erode(dilated, kernel, iterations=3)
+        # # erosion to remove noise and fill in gaps
+        # kernel = np.ones((15, 15), np.uint8)
+        # dilated = cv.dilate(thresh, kernel, iterations=3)
+        # eroded = cv.erode(dilated, kernel, iterations=3)
 
-        # find contour with largest bounding box
-        if profile:
-            start_contour = time.time()
-        contours, hierarchy = cv.findContours(eroded, cv.RETR_TREE,
-                                            cv.CHAIN_APPROX_SIMPLE)
-        if profile:
-            end_contour = time.time()
-            print("Contour Detection Time:", (end_contour - start_contour) * 1000, "milliseconds")
+        # # find contour with largest bounding box
+        # if profile:
+        #     start_contour = time.time()
+        # contours, hierarchy = cv.findContours(eroded, cv.RETR_TREE,
+        #                                     cv.CHAIN_APPROX_SIMPLE)
+        # if profile:
+        #     end_contour = time.time()
+        #     print("Contour Detection Time:", (end_contour - start_contour) * 1000, "milliseconds")
 
-        # get max area bounding box
-        max_area_idx = 0
-        if len(contours) > 0:
-            for i, contour in enumerate(contours):
-                area = cv.contourArea(contour)
-                if area > cv.contourArea(contours[max_area_idx]):
-                    max_area_idx = i
-            # draw bounding box
-            self.x_bound, self.y_bound, self.w_bound, self.h_bound = cv.boundingRect(
-                contours[max_area_idx])
-            self.w_bound = int(self.w_bound * 1.5)
-            self.h_bound = int(self.h_bound * 1.5)
+        # # get max area bounding box
+        # max_area_idx = 0
+        # if len(contours) > 0:
+        #     for i, contour in enumerate(contours):
+        #         area = cv.contourArea(contour)
+        #         if area > cv.contourArea(contours[max_area_idx]):
+        #             max_area_idx = i
+        #     # draw bounding box
+        #     self.x_bound, self.y_bound, self.w_bound, self.h_bound = cv.boundingRect(
+        #         contours[max_area_idx])
+        #     self.w_bound = int(self.w_bound * 1.5)
+        #     self.h_bound = int(self.h_bound * 1.5)
 
-            if self.display:
-                # Define the text and position
-                text = "ROI"
-                position = (self.x_bound, self.y_bound - 5
-                            )  # Position the text above the rectangle
+        #     if self.display:
+        #         # Define the text and position
+        #         text = "ROI"
+        #         position = (self.x_bound, self.y_bound - 5
+        #                     )  # Position the text above the rectangle
 
-                # Add the text
-                cv.putText(self.plot_img, text, position,
-                        cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-                cv.rectangle(
-                    self.plot_img, (self.x_bound, self.y_bound),
-                    (self.x_bound + self.w_bound, self.y_bound + self.h_bound),
-                    (255, 0, 0), 2)
+        #         # Add the text
+        #         cv.putText(self.plot_img, text, position,
+        #                 cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        #         cv.rectangle(
+        #             self.plot_img, (self.x_bound, self.y_bound),
+        #             (self.x_bound + self.w_bound, self.y_bound + self.h_bound),
+        #             (255, 0, 0), 2)
 
-            # crop everything inside of bounding box
-            crop_img = blur[self.y_bound:self.y_bound + self.h_bound,
-                            self.x_bound:self.x_bound + self.w_bound]
+        #     # crop everything inside of bounding box
+        #     crop_img = blur[self.y_bound:self.y_bound + self.h_bound,
+        #                     self.x_bound:self.x_bound + self.w_bound]
             # threshold on cropped image
-            ret, crop_img = cv.threshold(crop_img, 7, 255, cv.THRESH_BINARY)
+        ret, crop_img = cv.threshold(img, 7, 255, cv.THRESH_BINARY)
 
-        else:
-            crop_img = None
+        kernel = np.ones((5, 5), np.uint8)
+        crop_img = cv.morphologyEx(crop_img, cv.MORPH_OPEN, kernel)
 
-        self.prev_image = blur
+
+        # self.prev_image = blur
 
         if profile:
             end_total = time.time()
             print("Total Processing Time:", (end_total - start_total) * 1000, "milliseconds")
 
-        return blur, thresh, eroded, crop_img, time_diff
+        return None, None, None, crop_img, None
 
 
 
@@ -149,6 +150,17 @@ class BaseballDetector:
     def _remove_background(self, img):
         return cv.absdiff(img, self.background)
 
+    def _get_centroid(self, img):
+        M = cv.moments(img)
+        if M["m00"] != 0:
+            cX = int(M["m10"]/M["m00"])
+            cY = int(M["m01"]/M["m00"])
+            cv.circle(self.plot_img, (cX,cY), 2, (0,0,255), -1)
+        else:
+            return 0,0
+
+        return cX, cY
+
     def detect(self, img, display=False, profile=False):
         self.plot_img = img.copy()
         if not self.incoming_in_gray:
@@ -172,6 +184,7 @@ class BaseballDetector:
             start = time.time()
 
         x_loc, y_loc = self._get_hough_circle(crop_img)
+        # x_loc, y_loc = self._get_centroid(crop_img)
 
         if profile:
             print(f"get circle: {(time.time()-start)*1000} ms")
@@ -179,12 +192,12 @@ class BaseballDetector:
 
         if self.display:
             cv.imshow('raw', self.plot_img)
-            cv.imshow('blur', blur)
-            cv.imshow('thresh', thresh)
-            cv.imshow('dilated and eroded', eroded)
+            cv.imshow('roi input', img)
+            # cv.imshow('thresh', thresh)
+            # cv.imshow('dilated and eroded', eroded)
             if crop_img is not None:
                 cv.imshow('cropped', crop_img)
-            cv.imshow('time diff', time_diff)
+            # cv.imshow('time diff', time_diff)
             # cv.imshow('background', self.background)
             # cv.imshow('circle', circle)
             key = cv.waitKey(1)
