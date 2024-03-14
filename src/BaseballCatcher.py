@@ -23,6 +23,7 @@ Set CATCHER to 1 to use the catcher connected to the lab machine or 0 to use you
 '''
 WEBCAM = 0
 CATCHER = 1
+DISPLAY = False
 if WEBCAM:
     camera = cv.VideoCapture(0)
     width = int(camera.get(cv.CAP_PROP_FRAME_WIDTH))
@@ -161,7 +162,7 @@ class App(Frame):
                 self.currentX.set(self.Catcher.GetEncoderCount(X_MOTOR))
                 self.currentY.set(self.Catcher.GetEncoderCount(Y_MOTOR))
 
-            self.trajectory_estimator = TrajectoryEstimator(display=True)
+            self.trajectory_estimator = TrajectoryEstimator(crop=True, display=DISPLAY)
 
         # threading
         self.stopevent = threading.Event()
@@ -295,6 +296,7 @@ class App(Frame):
             self.Catcher.MoveAtSpeed(0, 0)  # set back to open loop speed mode and set speed to 0 to release the motors
             self.currentX.set(self.Catcher.GetEncoderCount(X_MOTOR))
             self.currentY.set(self.Catcher.GetEncoderCount(Y_MOTOR))
+            self.trajectory_estimator = TrajectoryEstimator(crop=True, display=DISPLAY)
 
     def run(self):  # run main loop
         self.root.mainloop()
@@ -341,16 +343,21 @@ class App(Frame):
                     if CATCHER:
                         
                         # x,y = self.trajectory_estimator.get_intercept(lframe, rframe)
-                        point3d = self.trajectory_estimator.get_ball_3D_location(lframe, rframe, mask=True)
+                        point3d = self.trajectory_estimator.get_ball_3D_location(lframe, rframe)
 
                         # get intercept estimate from trajectory estimator
                         if point3d is not None:
                             x, y = self.trajectory_estimator.get_intercept()
                             print(x,y)
 
+                            print(f"Num Detections: {len(self.trajectory_estimator.ball_loc_hist)}")
+
+                            if len(self.trajectory_estimator.ball_loc_hist) == 25:
+                                self.Catcher.MoveToXY(x,y)
+                            
+
                         # # add your code to move the catcher to the estimated location
                         # if x is not None and y is not None:
-                        #     self.Catcher.MoveToXY(x,y)
 
                         # wait for the move to be done
 

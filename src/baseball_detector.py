@@ -192,7 +192,7 @@ class BaseballDetector:
 
         if self.display:
             cv.imshow('raw', self.plot_img)
-            cv.imshow('roi input', img)
+            # cv.imshow('roi input', img)
             # cv.imshow('thresh', thresh)
             # cv.imshow('dilated and eroded', eroded)
             if crop_img is not None:

@@ -102,7 +102,7 @@ class TrajectoryEstimator:
 
     def _transform_to_catcher_frame(self, point_3d):
         x, y, z = point_3d
-        delta_x = 13
+        delta_x = 10 #seems about right. 
         delta_y = 26 #TODO: tune me and delta_z
         delta_z = 20
         z_offset = 0 #-30
@@ -117,8 +117,9 @@ class TrajectoryEstimator:
         rframe_masked = rframe[self.crop_points_y[0]: self.crop_points_y[1], self.crop_points_xright[0]:self.crop_points_xright[1]]
 
         if self.display:
-            cv.imshow("left masked", lframe_masked)
-            cv.imshow("right masked", rframe_masked)
+            # cv.imshow("left masked", lframe_masked)
+            # cv.imshow("right masked", rframe_masked)
+            pass
         return lframe_masked, rframe_masked
 
     def _undistort_and_rectify(self, left_img, right_img):
