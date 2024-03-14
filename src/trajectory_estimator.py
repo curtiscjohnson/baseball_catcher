@@ -102,8 +102,8 @@ class TrajectoryEstimator:
 
     def _transform_to_catcher_frame(self, point_3d):
         x, y, z = point_3d
-        delta_x = 10 #seems about right. 
-        delta_y = 26 #TODO: tune me and delta_z
+        delta_x = 11 #seems about right. making this smaller shifts the catcher to the left. I think
+        delta_y = 23 #TODO: tune me and delta_z
         delta_z = 20
         z_offset = 0 #-30
         #432

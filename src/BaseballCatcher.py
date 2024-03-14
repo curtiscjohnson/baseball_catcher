@@ -352,7 +352,7 @@ class App(Frame):
 
                             print(f"Num Detections: {len(self.trajectory_estimator.ball_loc_hist)}")
 
-                            if len(self.trajectory_estimator.ball_loc_hist) == 25:
+                            if len(self.trajectory_estimator.ball_loc_hist) > 11 and len(self.trajectory_estimator.ball_loc_hist) < 25:
                                 self.Catcher.MoveToXY(x,y)
                             
 
