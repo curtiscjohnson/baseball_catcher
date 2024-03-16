@@ -24,6 +24,7 @@ Set CATCHER to 1 to use the catcher connected to the lab machine or 0 to use you
 WEBCAM = 0
 CATCHER = 1
 DISPLAY = False
+
 if WEBCAM:
     camera = cv.VideoCapture(0)
     width = int(camera.get(cv.CAP_PROP_FRAME_WIDTH))
@@ -55,6 +56,9 @@ def cvMat2tkImg(arr):  # Convert OpenCV image Mat to image for display
 
 class App(Frame):
     def __init__(self, winname='Baseball Catcher'):  # GUI Design
+
+        self.XCMD = 0
+        self.YCMD = 0
         self.root = Tk()
         self.processFlag = True
         self.acquireFlag = False
@@ -297,6 +301,9 @@ class App(Frame):
             self.currentX.set(self.Catcher.GetEncoderCount(X_MOTOR))
             self.currentY.set(self.Catcher.GetEncoderCount(Y_MOTOR))
             self.trajectory_estimator = TrajectoryEstimator(crop=True, display=DISPLAY)
+            self.YCMD=0
+            self.XCMD=0
+
 
     def run(self):  # run main loop
         self.root.mainloop()
@@ -348,13 +355,29 @@ class App(Frame):
                         # get intercept estimate from trajectory estimator
                         if point3d is not None:
                             x, y = self.trajectory_estimator.get_intercept()
-                            print(x,y)
 
-                            print(f"Num Detections: {len(self.trajectory_estimator.ball_loc_hist)}")
+                            # print(f"Num Detections: {len(self.trajectory_estimator.ball_loc_hist)}")
+                            if  len(self.trajectory_estimator.ball_loc_hist) > 13 and len(self.trajectory_estimator.ball_loc_hist) < 30:
+                                print(x,y)
 
-                            if len(self.trajectory_estimator.ball_loc_hist) > 11 and len(self.trajectory_estimator.ball_loc_hist) < 25:
-                                self.Catcher.MoveToXY(x,y)
+                            # if len(self.trajectory_estimator.ball_loc_hist) > 16 and len(self.trajectory_estimator.ball_loc_hist) < 30:
+                            #     self.XCMD = x
+
+                            # if len(self.trajectory_estimator.ball_loc_hist) == 25:
+                            #     self.YCMD = y
                             
+                            #x converges pretty soon, y converges later. 
+                            if len(self.trajectory_estimator.ball_loc_hist) == 18 or len(self.trajectory_estimator.ball_loc_hist) == 27:
+                                if len(self.trajectory_estimator.ball_loc_hist) == 18:
+                                    #change x cmd
+                                    self.XCMD = x
+                                else:
+                                    #change y cmd
+                                    self.YCMD = y
+
+                                self.Catcher.MoveToXY(self.XCMD, self.YCMD)
+                                # self.Catcher.MoveToXY(x,y)
+                                print(x,y)
 
                         # # add your code to move the catcher to the estimated location
                         # if x is not None and y is not None:

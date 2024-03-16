@@ -46,8 +46,9 @@ class TrajectoryEstimator:
         self.P1 = np.load(f'{calibration_path}/P1.npy')
         self.P2 = np.load(f'{calibration_path}/P2.npy')
 
-        print(f"P1: {self.P1}")
-        print(f"P2: {self.P2}")
+        # print(f"P1: {self.P1}")
+        # print(f"P2: {self.P2}")
+        print("READY TO CATCH")
 
 
 
@@ -65,9 +66,9 @@ class TrajectoryEstimator:
 
         # point = self.get_3d_point(left_x, left_y, right_x, right_y)
         point = self.triangulate_point(left_x, left_y, right_x, right_y)
-        print(f"Camera frame: {point}")
+        # print(f"Camera frame: {point}")
         point = self._transform_to_catcher_frame(point)
-        print(f"Catcher frame: {point}")
+        # print(f"Catcher frame: {point}")
 
         self.ball_loc_hist.append(point)
 
@@ -92,18 +93,18 @@ class TrajectoryEstimator:
 
         # print(f"P1:\n{self.P1}")
         # print(f"P2:\n{self.P2}")
-        print(f"Left:\n{left_pts}")
-        print(f"Right:\n{right_pts}")
+        # print(f"Left:\n{left_pts}")
+        # print(f"Right:\n{right_pts}")
 
         point_4d = cv.triangulatePoints(self.P1, self.P2, left_pts, right_pts)
         point3d = point_4d[:3]/point_4d[-1]
-        print(point3d)
+        # print(point3d)
         return point3d.squeeze()        
 
     def _transform_to_catcher_frame(self, point_3d):
         x, y, z = point_3d
-        delta_x = 11 #seems about right. making this smaller shifts the catcher to the left. I think
-        delta_y = 23 #TODO: tune me and delta_z
+        delta_x = 8 #making this smaller shifts the catcher to the left. I think
+        delta_y = 23 
         delta_z = 20
         z_offset = 0 #-30
         #432
@@ -130,7 +131,7 @@ class TrajectoryEstimator:
                                   self.undistortRectifyMapRy, cv.INTER_LINEAR)
         return left_img_rect, right_img_rect
 
-    def _fit_curves(self, num_detections_to_wait):
+    def _fit_curves(self):
         #? this might be slow. Fix later with slicing?
         x_hist = [loc[0] for loc in self.ball_loc_hist]
         y_hist = [loc[1] for loc in self.ball_loc_hist]
@@ -140,9 +141,10 @@ class TrajectoryEstimator:
             print("stopped updating")
             return self.previous_xz_estimates[-1], self.previous_yz_estimates[-1]
 
-        if len(self.ball_loc_hist) > num_detections_to_wait:
-            best_fit_line = np.polyfit(z_hist[6:], x_hist[6:], 1)
-            best_fit_parabola = np.polyfit(z_hist[6:], y_hist[6:], 2)
+        num_to_throw_away = 7
+        if len(self.ball_loc_hist)>num_to_throw_away+3:
+            best_fit_line = np.polyfit(z_hist[num_to_throw_away:], x_hist[num_to_throw_away:], 1)
+            best_fit_parabola = np.polyfit(z_hist[num_to_throw_away:], y_hist[num_to_throw_away:], 2)
 
             self.previous_xz_estimates.append(best_fit_line[-1])
             self.previous_yz_estimates.append(best_fit_parabola[-1])
@@ -208,8 +210,8 @@ class TrajectoryEstimator:
         else:
             return None
 
-    def get_intercept(self, num_detections_to_wait=15) -> tuple:
-        x_intercept, y_intercept = self._fit_curves(num_detections_to_wait)
+    def get_intercept(self) -> tuple:
+        x_intercept, y_intercept = self._fit_curves()
         return (x_intercept, y_intercept)
     
     def get_ball_3D_location_profile(self, lframe, rframe, mask=False) -> np.ndarray:
