@@ -103,8 +103,8 @@ class TrajectoryEstimator:
 
     def _transform_to_catcher_frame(self, point_3d):
         x, y, z = point_3d
-        delta_x = 8 #making this smaller shifts the catcher to the left. I think
-        delta_y = 23 
+        delta_x = 9 #making this smaller shifts the catcher to the left. I think
+        delta_y = 25
         delta_z = 20
         z_offset = 0 #-30
         #432
